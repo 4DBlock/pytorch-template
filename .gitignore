@@ -1,3 +1,4 @@
-__pycahce__/
+__pycache__/
 saved/
-
+data/
+nohup.out

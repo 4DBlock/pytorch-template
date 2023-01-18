@@ -9,7 +9,8 @@ import model.model as module_arch
 from parse_config import ConfigParser
 from trainer import Trainer
 from utils import prepare_device
-
+import mlflow
+import json
 
 # fix random seeds for reproducibility
 SEED = 123
@@ -19,6 +20,8 @@ torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
 def main(config):
+    mlflow.set_tracking_uri("http://118.67.131.88:30001")
+
     logger = config.get_logger('train')
 
     # setup data_loader instances
@@ -51,7 +54,28 @@ def main(config):
                       valid_data_loader=valid_data_loader,
                       lr_scheduler=lr_scheduler)
 
-    trainer.train()
+    mlflow.set_experiment('model')
+
+    with mlflow.start_run(description=json.dumps(config.config, indent=2)):
+        mlflow.log_param('name', config.config['name'])
+
+        mlflow.log_params(config.config['arch']['args'])
+
+        mlflow.log_param('data_loader', config.config['data_loader']['type'])
+        mlflow.log_params(config.config['data_loader']['args'])
+
+        mlflow.log_param('optimizer', config.config['optimizer']['type'])
+        mlflow.log_params(config.config['optimizer']['args'])
+
+        mlflow.log_param('loss', config.config['loss'])
+        mlflow.log_param('metrics', config.config['metrics'])
+
+        mlflow.log_param('lr_scheduler', config.config['lr_scheduler']['type'])
+        mlflow.log_params(config.config['lr_scheduler']['args'])
+
+        mlflow.log_params(config.config['trainer'])
+
+        trainer.train()
 
 
 if __name__ == '__main__':

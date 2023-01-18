@@ -3,6 +3,7 @@ import torch
 from torchvision.utils import make_grid
 from base import BaseTrainer
 from utils import inf_loop, MetricTracker
+import mlflow
 
 
 class Trainer(BaseTrainer):
@@ -57,6 +58,8 @@ class Trainer(BaseTrainer):
                 self.train_metrics.update(met.__name__, met(output, target))
 
             if batch_idx % self.log_step == 0:
+                # step = (epoch - 1) * self.len_epoch + batch_idx
+                # mlflow.log_metrics(self.train_metrics.result(), step)
                 self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
                     epoch,
                     self._progress(batch_idx),
@@ -69,6 +72,7 @@ class Trainer(BaseTrainer):
 
         if self.do_validation:
             val_log = self._valid_epoch(epoch)
+            # mlflow.log_metrics({'val_'+k : v for k, v in val_log.items()}, step)
             log.update(**{'val_'+k : v for k, v in val_log.items()})
 
         if self.lr_scheduler is not None:
